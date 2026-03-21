@@ -37,7 +37,8 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        role: data.role,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...({ role: data.role } as any),
       });
 
       if (result.error) {
