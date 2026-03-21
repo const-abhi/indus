@@ -36,7 +36,8 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        role: data.role,
+   // @ts-expect-error — role is a custom field defined in auth config
+role: data.role,
       });
 
       if (result.error) {
