@@ -32,12 +32,12 @@ export default function SignupPage() {
   async function onSubmit(data: SignUpInput) {
     setLoading(true);
     try {
-      const result = await signUp.email({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (signUp.email as any)({
         email: data.email,
         password: data.password,
         name: data.name,
-   // @ts-expect-error — role is a custom field defined in auth config
-role: data.role,
+        role: data.role,
       });
 
       if (result.error) {
@@ -68,7 +68,6 @@ role: data.role,
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Role selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               I am a…
