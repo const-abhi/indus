@@ -1,6 +1,13 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
-const f = createUploadthing();
+const f = createUploadthing({
+  errorFormatter: (err) => {
+    console.error("UploadThing server error:", err);
+    return {
+      message: err.message,
+    };
+  },
+});
 
 export const ourFileRouter = {
   // Student submission uploads
