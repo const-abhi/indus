@@ -62,19 +62,19 @@ export default function LandingPage() {
             {
               icon: BookOpen,
               
-              title: "Assign tasks",
+              title: "Assign Tasks",
               desc: "Assignments with due dates, subjects, and descriptions",
             },
             {
               icon: FileCheck,
               
-              title: "Submit work",
+              title: "Submit Work",
               desc: "Direct uploads of PDFs, Word docs, and images",
             },
             {
               icon: Users,
              
-              title: "Track progress",
+              title: "Track Progress",
               desc: "Detailed submission status at a glance",
             },
           ].map(({ icon: Icon, title, desc }) => (
