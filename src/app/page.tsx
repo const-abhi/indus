@@ -27,7 +27,7 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
         <div className="inline-flex items-center gap-2 bg-white/10 text-white/70 text-xs font-medium px-3 py-1.5 rounded-full mb-8 border border-white/10">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-         Online Now
+          Online Now
         </div>
 
         <h1 className="font-serif text-6xl md:text-7xl tracking-tight mb-6 max-w-3xl leading-[1.05]">
@@ -61,19 +61,19 @@ export default function LandingPage() {
           {[
             {
               icon: BookOpen,
-              
+
               title: "Assign Tasks",
               desc: "Assignments with due dates, subjects, and descriptions",
             },
             {
               icon: FileCheck,
-              
+
               title: "Submit Work",
               desc: "Direct uploads of PDFs, Word docs, and images",
             },
             {
               icon: Users,
-             
+
               title: "Track Progress",
               desc: "Detailed submission status at a glance",
             },
@@ -111,9 +111,9 @@ export default function LandingPage() {
          */}
       <footer className="border-t border-white/10 px-8 py-5 text-center text-xs text-white/30">
         © {new Date().getFullYear()} Abhishek Bhattacharjee (2203033)<footer>Indus. Powered by Next.js, Prisma &amp; UploadThing.
+        </footer>
       </footer>
-      </footer>
-      
+
     </div>
   );
 }
