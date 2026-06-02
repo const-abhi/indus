@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate, formatRelative, formatFileSize, subjectColor, cn } from "@/lib/utils";
+import { formatDate, formatRelative, formatFileSize, cn } from "@/lib/utils";
 import { ArrowLeft, FileText, ExternalLink, Users, FileCheck, Clock } from "lucide-react";
 
 interface Props {
@@ -49,8 +49,8 @@ export default async function SubmissionsPage({ searchParams }: Props) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <span className={cn("text-xs font-medium px-2.5 py-1 rounded-full", subjectColor(task.subject))}>
-                {task.subject}
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">
+                {task?.postType === "ANNOUNCEMENT" ? "📢 Announcement" : "Assignment"}
               </span>
               <span className="text-xs text-gray-400">Due {formatDate(task.dueDate)}</span>
             </div>

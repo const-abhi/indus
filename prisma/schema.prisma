@@ -19,6 +19,18 @@ enum SubmissionStatus {
   GRADED
 }
 
+enum PostType {
+  ASSIGNMENT
+  ANNOUNCEMENT
+}
+
+enum NotificationType {
+  NEW_ASSIGNMENT
+  NEW_ANNOUNCEMENT
+  SUBMISSION_DEADLINE
+  EVALUATION_DEADLINE
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String
@@ -26,16 +38,19 @@ model User {
   emailVerified Boolean  @default(false)
   image         String?
   role          Role     @default(STUDENT)
+  rollNumber    String?  // required for STUDENT at signup, null for TEACHER
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // Better Auth relations
-  sessions      Session[]
-  accounts      Account[]
-
-  // App relations
-  tasksCreated  Task[]       @relation("TaskCreator")
-  submissions   Submission[]
+  sessions       Session[]
+  accounts       Account[]
+  coursesCreated Course[]       @relation("CourseTeacher")
+  tasksCreated   Task[]         @relation("TaskCreator")
+  submissions    Submission[]   @relation("StudentSubmissions")
+  evaluations    Submission[]   @relation("SubmissionEvaluator")
+  enrollments    Enrollment[]
+  notifications  Notification[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Session {
@@ -47,24 +62,22 @@ model Session {
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
-  id                   String    @id @default(cuid())
-  userId               String
-  accountId            String
-  providerId           String
-  accessToken          String?
-  refreshToken         String?
-  idToken              String?
-  expiresAt            DateTime?
-  password             String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Verification {
@@ -76,20 +89,60 @@ model Verification {
   updatedAt  DateTime @updatedAt
 }
 
-model Task {
+// ─── Course ────────────────────────────────────────────────────────────────
+
+model Course {
   id          String   @id @default(cuid())
-  title       String
-  description String
-  subject     String   @default("General")
-  dueDate     DateTime?
+  name        String
+  description String?
+  code        String   @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  teacherId   String
+  teacher     User         @relation("CourseTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  enrollments Enrollment[]
+}
+
+// ─── Enrollment (simplified — name/roll come from User now) ────────────────
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  enrolledAt DateTime @default(now())
+
+  courseId  String
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+}
+
+// ─── Task ──────────────────────────────────────────────────────────────────
+
+model Task {
+  id                 String    @id @default(cuid())
+  title              String
+  description        String
+  subject            String    @default("General")
+  postType           PostType  @default(ASSIGNMENT)
+  dueDate            DateTime?
+  evaluationDeadline DateTime?
+  attachments        Json?     // [{ type: "file"|"link", url: string, name: string }]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   createdById String
   createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
-  submissions Submission[]
+  courseId      String
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions   Submission[]
+  notifications Notification[]
 }
+
+// ─── Submission ────────────────────────────────────────────────────────────
 
 model Submission {
   id          String           @id @default(cuid())
@@ -101,11 +154,50 @@ model Submission {
   submittedAt DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  // Evaluation
+  evalScore           Int?
+  submissionTimeScore Float?
+  compoundScore       Float?
+  evaluatedAt         DateTime?
+  evaluatedById       String?
+  evaluatedBy         User?    @relation("SubmissionEvaluator", fields: [evaluatedById], references: [id])
+
   taskId    String
   task      Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
   studentId String
-  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   User   @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, studentId])
+}
+
+// ─── Notification ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  body      String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String?
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, taskId])
+}
+
+// ─── Web Push Subscriptions ────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

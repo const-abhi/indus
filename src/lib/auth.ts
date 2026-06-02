@@ -11,8 +11,8 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24,     // refresh every day
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
   },
   user: {
     additionalFields: {
@@ -20,6 +20,12 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: "STUDENT",
+        input: true,
+      },
+      rollNumber: {
+        type: "string",
+        required: false,
+        defaultValue: null,
         input: true,
       },
     },

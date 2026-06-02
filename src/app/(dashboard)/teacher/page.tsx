@@ -3,29 +3,34 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate, isOverdue, subjectColor } from "@/lib/utils";
-import { FilePlus, ChevronRight, Users, ClipboardList, FileCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { Plus, Users, ClipboardList, FileCheck, BookOpen } from "lucide-react";
+import CopyCodeButton from "@/components/ui/CopyCodeButton";
 
 export default async function TeacherDashboard() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
   if ((session.user as { role: string }).role !== "TEACHER") redirect("/student");
 
-  const tasks = await prisma.task.findMany({
-    where: { createdById: session.user.id },
+  const courses = await prisma.course.findMany({
+    where: { teacherId: session.user.id },
     include: {
-      submissions: {
-        include: { student: { select: { id: true, name: true } } },
+      _count: { select: { tasks: true, enrollments: true } },
+      tasks: {
+        include: { _count: { select: { submissions: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 3,
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  const totalSubmissions = tasks.reduce((acc, t) => acc + t.submissions.length, 0);
-  const uniqueStudents = new Set(
-    tasks.flatMap((t) => t.submissions.map((s) => s.studentId))
-  ).size;
+  const totalTasks = courses.reduce((a, c) => a + c._count.tasks, 0);
+  const totalStudents = courses.reduce((a, c) => a + c._count.enrollments, 0);
+  const totalSubmissions = courses.reduce(
+    (a, c) => a + c.tasks.reduce((b, t) => b + t._count.submissions, 0),
+    0
+  );
 
   return (
     <div className="animate-fade-in">
@@ -36,20 +41,21 @@ export default async function TeacherDashboard() {
           <p className="text-gray-500 text-sm">Welcome back, {session.user.name}</p>
         </div>
         <Link
-          href="/teacher/tasks/new"
+          href="/teacher/courses/new"
           className="flex items-center gap-2 bg-[#1a1a2e] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#16213e] transition-colors"
         >
-          <FilePlus className="w-4 h-4" />
-          New task
+          <Plus className="w-4 h-4" />
+          New course
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-4 gap-4 mb-10">
         {[
-          { icon: ClipboardList, label: "Tasks created", value: tasks.length },
-          { icon: FileCheck, label: "Total submissions", value: totalSubmissions },
-          { icon: Users, label: "Students enrolled", value: uniqueStudents },
+          { icon: BookOpen, label: "Courses", value: courses.length },
+          { icon: ClipboardList, label: "Tasks created", value: totalTasks },
+          { icon: FileCheck, label: "Submissions", value: totalSubmissions },
+          { icon: Users, label: "Students enrolled", value: totalStudents },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="bg-white border border-gray-200 rounded-xl p-5">
             <div className="flex items-center gap-2 text-gray-400 mb-3">
@@ -61,60 +67,79 @@ export default async function TeacherDashboard() {
         ))}
       </div>
 
-      {/* Tasks */}
+      {/* Courses */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-gray-900">Your tasks</h2>
-        <Link href="/teacher/tasks" className="text-sm text-gray-400 hover:text-gray-700 flex items-center gap-1">
-          View all <ChevronRight className="w-3.5 h-3.5" />
+        <h2 className="text-lg font-medium text-gray-900">Your courses</h2>
+        <Link
+          href="/teacher/courses"
+          className="text-sm text-gray-400 hover:text-gray-700"
+        >
+          View all →
         </Link>
       </div>
 
-      {tasks.length === 0 ? (
+      {courses.length === 0 ? (
         <div className="bg-white border border-dashed border-gray-200 rounded-xl p-16 text-center">
-          <ClipboardList className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm mb-4">No tasks yet. Create your first one.</p>
+          <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm mb-4">No courses yet. Create your first one.</p>
           <Link
-            href="/teacher/tasks/new"
+            href="/teacher/courses/new"
             className="inline-flex items-center gap-2 bg-[#1a1a2e] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#16213e] transition-colors"
           >
-            <FilePlus className="w-4 h-4" />
-            Create task
+            <Plus className="w-4 h-4" />
+            Create course
           </Link>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
-          {tasks.slice(0, 6).map((task) => {
-            const subCount = task.submissions.length;
-            const overdue = isOverdue(task.dueDate);
-            return (
-              <Link
-                key={task.id}
-                href={`/teacher/submissions?taskId=${task.id}`}
-                className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-400 transition-colors group"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className={cn("text-xs font-medium px-2.5 py-1 rounded-full", subjectColor(task.subject))}>
-                    {task.subject}
+          {courses.map((course) => (
+            <div
+              key={course.id}
+              className="bg-white border border-gray-200 rounded-xl p-5"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 bg-[#1a1a2e]/5 rounded-lg px-2.5 py-1">
+                  <span className="font-mono text-xs font-bold tracking-widest text-[#1a1a2e]">
+                    {course.code}
                   </span>
-                  {overdue && task.dueDate && (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600">
-                      Overdue
-                    </span>
-                  )}
+                  <CopyCodeButton code={course.code} />
                 </div>
-                <h3 className="font-medium text-gray-900 mb-1.5 group-hover:text-[#1a1a2e]">
-                  {task.title}
-                </h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-4">{task.description}</p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Due {formatDate(task.dueDate)}</span>
-                  <span className="font-medium text-gray-700">
-                    {subCount} submission{subCount !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+                <span className="text-xs text-gray-400">
+                  {course._count.enrollments} student{course._count.enrollments !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <h3 className="font-medium text-gray-900 mb-1">{course.name}</h3>
+              <p className="text-xs text-gray-400 mb-3">{course._count.tasks} task{course._count.tasks !== 1 ? "s" : ""}</p>
+
+              {course.tasks.length > 0 && (
+                <ul className="space-y-1 border-t border-gray-50 pt-3">
+                  {course.tasks.map((task) => (
+                    <li key={task.id} className="flex items-center justify-between text-xs text-gray-500">
+                      <span className="truncate max-w-[200px]">{task.title}</span>
+                      <span className="shrink-0 ml-2 text-gray-400">
+                        Due {formatDate(task.dueDate)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="flex gap-2 mt-4">
+                <Link
+                  href={`/teacher/tasks?courseId=${course.id}`}
+                  className="flex-1 text-center text-xs font-medium text-[#1a1a2e] border border-gray-200 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Tasks
+                </Link>
+                <Link
+                  href={`/teacher/tasks/new?courseId=${course.id}`}
+                  className="flex-1 text-center text-xs font-medium bg-[#1a1a2e] text-white py-1.5 rounded-lg hover:bg-[#16213e] transition-colors"
+                >
+                  + Add task
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

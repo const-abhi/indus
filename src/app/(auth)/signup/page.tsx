@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, GraduationCap, BookOpen } from "lucide-react";
+import { Loader2, Eye, EyeOff, GraduationCap, BookOpen, Hash } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
 import { signUpSchema, type SignUpInput } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -16,13 +16,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<SignUpInput>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { role: "STUDENT" },
   });
@@ -37,8 +31,8 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...({ role: data.role } as any),
+        role: data.role,
+        ...(data.role === "STUDENT" ? { rollNumber: data.rollNumber } : {}),
       });
 
       if (result.error) {
@@ -47,11 +41,7 @@ export default function SignupPage() {
       }
 
       toast.success("Account created! Redirecting…");
-      if (data.role === "TEACHER") {
-        router.push("/teacher");
-      } else {
-        router.push("/student");
-      }
+      router.push(data.role === "TEACHER" ? "/teacher" : "/student");
       router.refresh();
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -69,10 +59,9 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* Role selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              I am a…
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">I am a…</label>
             <div className="grid grid-cols-2 gap-3">
               {(["STUDENT", "TEACHER"] as const).map((role) => (
                 <button
@@ -86,11 +75,7 @@ export default function SignupPage() {
                       : "bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300"
                   )}
                 >
-                  {role === "STUDENT" ? (
-                    <GraduationCap className="w-4 h-4" />
-                  ) : (
-                    <BookOpen className="w-4 h-4" />
-                  )}
+                  {role === "STUDENT" ? <GraduationCap className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
                   {role === "STUDENT" ? "Student" : "Teacher"}
                 </button>
               ))}
@@ -98,64 +83,59 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Full name
-            </label>
-            <input
-              {...register("name")}
-              type="text"
-              placeholder="Your full name"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white"
-            />
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
-            )}
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
+            <input {...register("name")} type="text" placeholder="Your full name"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white" />
+            {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
+          </div>
+
+          {/* Roll number — students only */}
+          {selectedRole === "STUDENT" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Roll number <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  {...register("rollNumber")}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="e.g. 2203033"
+                  maxLength={7}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-mono tracking-widest focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white"
+                />
+              </div>
+              {errors.rollNumber ? (
+                <p className="mt-1 text-xs text-red-600">{errors.rollNumber.message}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-400">
+                  7 digits — series (2) + dept code (2) + serial (3) e.g. <span className="font-mono">22</span>·<span className="font-mono">03</span>·<span className="font-mono">033</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <input {...register("email")} type="email" placeholder="you@email.com"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white" />
+            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Email
-            </label>
-            <input
-              {...register("email")}
-              type="email"
-              placeholder="you@email.com"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white"
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <div className="relative">
-              <input
-                {...register("password")}
-                type={showPassword ? "text" : "password"}
-                placeholder="Min. 8 characters"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
+              <input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Min. 8 characters"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors bg-gray-50 focus:bg-white pr-10" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-            )}
+            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#1a1a2e] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#16213e] transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full bg-[#1a1a2e] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#16213e] transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             Create account
           </button>
@@ -163,9 +143,7 @@ export default function SignupPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#1a1a2e] font-medium hover:underline">
-            Sign in
-          </Link>
+          <Link href="/login" className="text-[#1a1a2e] font-medium hover:underline">Sign in</Link>
         </p>
       </div>
     </div>

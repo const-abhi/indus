@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { BookOpen, Users, FileCheck, ArrowRight, CheckCircle } from "lucide-react";
+import { BookOpen, Users, FileCheck, ArrowRight, CheckCircle, AlignCenter } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#1a1a2e] text-white flex flex-col">
+    <div className="min-h-screen bg-[#162936] text-white flex flex-col">
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10">
         <span className="font-serif text-2xl tracking-tight">Indus</span>
@@ -16,7 +16,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/signup"
-            className="text-sm bg-white text-[#1a1a2e] font-medium px-5 py-2 rounded-lg hover:bg-white/90 transition-colors"
+            className="text-sm bg-white text-[#162936] font-medium px-5 py-2 rounded-lg hover:bg-white/90 transition-colors"
           >
             Get started
           </Link>
@@ -27,23 +27,21 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
         <div className="inline-flex items-center gap-2 bg-white/10 text-white/70 text-xs font-medium px-3 py-1.5 rounded-full mb-8 border border-white/10">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-          Open for enrolment
+         Online Now
         </div>
 
         <h1 className="font-serif text-6xl md:text-7xl tracking-tight mb-6 max-w-3xl leading-[1.05]">
-          Assignments,{" "}
-          <span className="italic text-white/50">simplified.</span>
+          One solution{" "}<p></p>
+          <span className="italic text-white/50">for all your assignments.</span>
         </h1>
 
         <p className="text-white/50 text-lg max-w-lg mb-10 leading-relaxed">
-          Indus helps teachers create and track assignments, while students
-          submit their work — all in one clean, structured platform.
-        </p>
+          Maintain the flow of learning with Indus.</p>
 
         <div className="flex items-center gap-4">
           <Link
             href="/signup"
-            className="flex items-center gap-2 bg-white text-[#1a1a2e] font-medium px-7 py-3.5 rounded-lg hover:bg-white/90 transition-colors text-sm"
+            className="flex items-center gap-2 bg-white text-[#162936] font-medium px-7 py-3.5 rounded-lg hover:bg-white/90 transition-colors text-sm"
           >
             Create an account
             <ArrowRight className="w-4 h-4" />
@@ -63,18 +61,21 @@ export default function LandingPage() {
           {[
             {
               icon: BookOpen,
+              
               title: "Assign tasks",
-              desc: "Teachers create structured assignments with due dates, subjects, and detailed descriptions.",
+              desc: "Assignments with due dates, subjects, and descriptions",
             },
             {
               icon: FileCheck,
+              
               title: "Submit work",
-              desc: "Students upload PDFs, Word docs, and images directly from their browser. No email needed.",
+              desc: "Direct uploads of PDFs, Word docs, and images",
             },
             {
               icon: Users,
+             
               title: "Track progress",
-              desc: "See submission status at a glance. Know who's submitted, who's pending, and who's late.",
+              desc: "Detailed submission status at a glance",
             },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="space-y-3">
@@ -89,6 +90,7 @@ export default function LandingPage() {
       </section>
 
       {/* Demo credentials */}
+      {/*
       <section className="border-t border-white/10 px-8 py-10 bg-white/5">
         <div className="max-w-4xl mx-auto">
           <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-4">
@@ -106,10 +108,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
+         */}
       <footer className="border-t border-white/10 px-8 py-5 text-center text-xs text-white/30">
-        © {new Date().getFullYear()} Indus. Built with Next.js, Prisma &amp; UploadThing.
+        © {new Date().getFullYear()} Abhishek Bhattacharjee (2203033)<footer>Indus. Powered by Next.js, Prisma &amp; UploadThing.
       </footer>
+      </footer>
+      
     </div>
   );
 }
